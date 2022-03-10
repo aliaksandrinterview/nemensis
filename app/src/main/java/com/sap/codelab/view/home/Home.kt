@@ -2,19 +2,19 @@ package com.sap.codelab.view.home
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.*
 import androidx.annotation.NonNull
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import android.view.Menu
-import android.view.MenuItem
 import androidx.lifecycle.ViewModelProvider
 import com.sap.codelab.R
 import com.sap.codelab.model.Memo
+import com.sap.codelab.model.VoiceCommands
 import com.sap.codelab.utils.coroutines.ScopeProvider
 import com.sap.codelab.view.create.CreateMemo
 import com.sap.codelab.view.detail.BUNDLE_MEMO_ID
 import com.sap.codelab.view.detail.ViewMemo
+import com.sap.codelab.view.voice.Voice
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.content_home.*
 import kotlinx.coroutines.launch
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 /**
  * The main activity of the app. Shows a list of recorded memos and lets the user add new memos.
  */
-internal class Home : AppCompatActivity() {
+internal class Home : Voice() {
 
     private lateinit var adapter: MemoAdapter
     private lateinit var model: HomeViewModel
@@ -43,21 +43,29 @@ internal class Home : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         adapter = MemoAdapter(mutableListOf(), {
             //Implementation for when the user selects a row to show the detail view
-            view ->
+                view ->
             val intent = Intent(this@Home, ViewMemo::class.java)
             intent.putExtra(BUNDLE_MEMO_ID, (view.tag as Memo).id)
             startActivity(intent)
         }, {
             //Implementation for when the user marks a memo as completed
-            checkbox, isChecked ->
+                checkbox, isChecked ->
             model.updateMemo(checkbox.tag as Memo, isChecked)
         })
         recyclerView.adapter = adapter
-        recyclerView.addItemDecoration(DividerItemDecoration(this, (recyclerView.layoutManager as LinearLayoutManager).orientation))
-
+        recyclerView.addItemDecoration(
+            DividerItemDecoration(
+                this,
+                (recyclerView.layoutManager as LinearLayoutManager).orientation
+            )
+        )
         fab.setOnClickListener {
             //Handles clicks on the FAB button > creates a new Memo
             startActivity(Intent(this@Home, CreateMemo::class.java))
+        }
+        fab.setOnLongClickListener {
+            bindVoiceService()
+            true
         }
     }
 
@@ -66,9 +74,9 @@ internal class Home : AppCompatActivity() {
             val observables = if (showAll) viewModel.getAllMemos() else viewModel.getOpenMemos()
             //Update the model with the observables
             viewModel.setMemos(observables, this@Home)
-            observables.observe(this@Home, { memoList ->
+            observables.observe(this@Home) { memoList ->
                 if (memoList != null) adapter.setItems(memoList)
-            })
+            }
         }
     }
 
@@ -85,23 +93,43 @@ internal class Home : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_show_all -> {
-                observeViewModel(model, true)
-                //Switch available menu options
-                menuItemShowAll.isVisible = false
-                menuItemShowOpen.isVisible = true
+                showAllMemos()
                 true
             }
             R.id.action_show_open -> {
-                observeViewModel(model, false)
-                //Switch available menu options
-                menuItemShowOpen.isVisible = false
-                menuItemShowAll.isVisible = true
+                showOpenMemos()
                 true
             }
 
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun showAllMemos() {
+        observeViewModel(model, true)
+        //Switch available menu options
+        menuItemShowAll.isVisible = false
+        menuItemShowOpen.isVisible = true
+    }
+
+    private fun showOpenMemos() {
+        observeViewModel(model, false)
+        //Switch available menu options
+        menuItemShowOpen.isVisible = false
+        menuItemShowAll.isVisible = true
+    }
+
+    override fun onVoiceRecognitionResult(result: VoiceCommands) {
+        when (result) {
+            VoiceCommands.CREATE_MEMO -> openCreateNewMemo()
+            VoiceCommands.SHOW_ALL -> showAllMemos()
+            VoiceCommands.SHOW_OPEN -> showOpenMemos()
+            VoiceCommands.UNKNOWN -> unknownCommand()
+        }
+    }
+
+    private fun openCreateNewMemo() =
+        startActivity(Intent(this@Home, CreateMemo::class.java))
 
     override fun onDestroy() {
         ScopeProvider.cancel(ui)

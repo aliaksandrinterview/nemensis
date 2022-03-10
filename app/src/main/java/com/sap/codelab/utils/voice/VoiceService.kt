@@ -10,12 +10,15 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import com.sap.codelab.BuildConfig
+import com.sap.codelab.model.VoiceCommands
+import com.sap.codelab.view.voice.VoiceRecognitionListener
 import java.util.*
 
 class VoiceService : Service() {
 
     private val binder = VoiceServiceBinder()
     private var isVoiceRecognitionStart = true
+    private var voiceListener: VoiceRecognitionListener? = null
     private val speechRecognizerIntent: Intent by lazy {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
@@ -65,7 +68,7 @@ class VoiceService : Service() {
 
         override fun onError(error: Int) {
             if (error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) {
-                startVoiceRecognition()
+                startVoiceRecognition(voiceListener)
             }
         }
 
@@ -91,16 +94,23 @@ class VoiceService : Service() {
 
     private fun onRecognizerResult(result: List<String>) {
         if (result.isNotEmpty()) {
-
+            val command =
+                VoiceCommands.values().first { it.value == result.joinToString(separator = " ") }
+            voiceListener?.onVoiceRecognitionResult(command)
+        } else {
+            voiceListener?.onVoiceRecognitionResult(VoiceCommands.UNKNOWN)
         }
+        voiceListener?.finishListening()
     }
 
-    fun startVoiceRecognition() {
+    fun startVoiceRecognition(voiceListener: VoiceRecognitionListener?) {
+        this.voiceListener = voiceListener
         speechRecognizer.startListening(speechRecognizerIntent)
         isVoiceRecognitionStart = true
     }
 
     fun stopVoiceRecognition() {
+        voiceListener = null
         speechRecognizer.stopListening()
         isVoiceRecognitionStart = false
     }
