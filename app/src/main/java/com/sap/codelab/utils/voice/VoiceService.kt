@@ -9,16 +9,32 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import android.widget.Toast
 import com.sap.codelab.BuildConfig
 import com.sap.codelab.model.VoiceCommands
 import com.sap.codelab.view.voice.VoiceRecognitionListener
 import java.util.*
 
+/**
+ * Service for recognizing voice commands
+ */
 class VoiceService : Service() {
 
     private val binder = VoiceServiceBinder()
+
+    /**
+     * Current state of recognition listening
+     */
     private var isVoiceRecognitionStart = true
+
+    /**
+     * Interface for sending recognition results to activity
+     */
     private var voiceListener: VoiceRecognitionListener? = null
+
+    /**
+     * Intent for start speech recognition
+     */
     private val speechRecognizerIntent: Intent by lazy {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
@@ -30,6 +46,10 @@ class VoiceService : Service() {
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
     }
+
+    /**
+     * Object used for receiving notifications from the SpeechRecognizer when the recognition related events occur
+     */
     private val speechResultListener = object : RecognitionListener {
 
         override fun onReadyForSpeech(params: Bundle?) {
@@ -69,6 +89,8 @@ class VoiceService : Service() {
         override fun onError(error: Int) {
             if (error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) {
                 startVoiceRecognition(voiceListener)
+            } else {
+                voiceListener?.onVoiceServiceError()
             }
         }
 
@@ -80,6 +102,10 @@ class VoiceService : Service() {
             onRecognizerResult(texts)
         }
     }
+
+    /**
+     * This service allows access to the speech recognizer
+     */
     private lateinit var speechRecognizer: SpeechRecognizer
 
     override fun onBind(intent: Intent?): IBinder {
@@ -92,10 +118,37 @@ class VoiceService : Service() {
         speechRecognizer.setRecognitionListener(speechResultListener)
     }
 
+    /**
+     * Function for start listen commands
+     * @param voiceListener listener for send recognition results to activity
+     */
+    fun startVoiceRecognition(voiceListener: VoiceRecognitionListener?) {
+        this.voiceListener = voiceListener
+        speechRecognizer.startListening(speechRecognizerIntent)
+        isVoiceRecognitionStart = true
+    }
+
+    /**
+     * Function for stop listen commands
+     */
+    fun stopVoiceRecognition() {
+        voiceListener = null
+        speechRecognizer.stopListening()
+        isVoiceRecognitionStart = false
+    }
+
+    /**
+     * Process recognition results
+     * @param result list of recognitions
+     */
     private fun onRecognizerResult(result: List<String>) {
         if (result.isNotEmpty()) {
+            val recognitionResult = result.joinToString(separator = " ")
+            Toast.makeText(this, recognitionResult, Toast.LENGTH_SHORT).show()
             val command =
-                VoiceCommands.values().first { it.value == result.joinToString(separator = " ") }
+                VoiceCommands.values()
+                    .firstOrNull { it.value == recognitionResult }
+                    ?: VoiceCommands.UNKNOWN
             voiceListener?.onVoiceRecognitionResult(command)
         } else {
             voiceListener?.onVoiceRecognitionResult(VoiceCommands.UNKNOWN)
@@ -103,20 +156,7 @@ class VoiceService : Service() {
         voiceListener?.finishListening()
     }
 
-    fun startVoiceRecognition(voiceListener: VoiceRecognitionListener?) {
-        this.voiceListener = voiceListener
-        speechRecognizer.startListening(speechRecognizerIntent)
-        isVoiceRecognitionStart = true
-    }
-
-    fun stopVoiceRecognition() {
-        voiceListener = null
-        speechRecognizer.stopListening()
-        isVoiceRecognitionStart = false
-    }
-
     inner class VoiceServiceBinder : Binder() {
-
         fun getService(): VoiceService = this@VoiceService
     }
 }

@@ -62,9 +62,10 @@ internal class Home : Voice() {
         fab.setOnClickListener {
             //Handles clicks on the FAB button > creates a new Memo
             startActivity(Intent(this@Home, CreateMemo::class.java))
+            stopVoiceService()
         }
         fab.setOnLongClickListener {
-            bindVoiceService()
+            startVoiceService()
             true
         }
     }
@@ -119,6 +120,10 @@ internal class Home : Voice() {
         menuItemShowAll.isVisible = true
     }
 
+    /**
+     * Overridden method for process recognized results. If needn't process some of commands add empty else block
+     * @param result enum collection of supported commands
+     */
     override fun onVoiceRecognitionResult(result: VoiceCommands) {
         when (result) {
             VoiceCommands.CREATE_MEMO -> openCreateNewMemo()
