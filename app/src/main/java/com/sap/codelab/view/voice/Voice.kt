@@ -85,7 +85,7 @@ abstract class Voice : AppCompatActivity(), VoiceRecognitionListener {
         isServiceConnected = true
         voiceService = service
         voiceService?.startVoiceRecognition(this)
-        Toast.makeText(this, R.string.say_command, Toast.LENGTH_LONG).show()
+        Toast.makeText(this, R.string.say_command, Toast.LENGTH_SHORT).show()
     }
 
     /**
