@@ -74,26 +74,24 @@ internal class Home : AppCompatActivity() {
     }
 
     private fun startVoiceRecognition() {
-        if (voiceRecognizer == null)
-            voiceRecognizer = VoiceRecognizer.Builder(this)
-                .setOnVoiceRecognitionResult(::onVoiceRecognitionResult)
-                .setOnVoiceRecognitionStarted {
-                    fab.setImageResource(R.drawable.ic_mic)
-                    Toast.makeText(this, R.string.say_command, Toast.LENGTH_SHORT).show()
-                }
-                .setOnVoiceRecognitionPreResult {
-                    Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                }
-                .setOnVoiceRecognitionError {
-                    Toast.makeText(this, R.string.voice_service_error, Toast.LENGTH_LONG).show()
-                }
-                .setOnStop {
-                    fab.setImageResource(R.drawable.ic_add)
-                }
-                .build()
-                .start()
-        else if (!voiceRecognizer!!.isRecognitionStarted)
-            voiceRecognizer!!.start()
+        val recognizer = voiceRecognizer ?: VoiceRecognizer.Builder(this)
+            .setOnVoiceRecognitionResult(::onVoiceRecognitionResult)
+            .setOnVoiceRecognitionStarted {
+                fab.setImageResource(R.drawable.ic_mic)
+                Toast.makeText(this, R.string.say_command, Toast.LENGTH_SHORT).show()
+            }
+            .setOnVoiceRecognitionPreResult {
+                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+            }
+            .setOnVoiceRecognitionError {
+                Toast.makeText(this, R.string.voice_service_error, Toast.LENGTH_LONG).show()
+            }
+            .setOnStop {
+                fab.setImageResource(R.drawable.ic_add)
+            }
+            .build()
+            .also { voiceRecognizer = it }
+        recognizer.start()
     }
 
     private fun observeViewModel(@NonNull viewModel: HomeViewModel, showAll: Boolean) {
