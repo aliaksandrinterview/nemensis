@@ -1,4 +1,4 @@
-package com.sap.codelab.utils.voice
+package com.sap.codelab.service.voice
 
 import android.app.Service
 import android.content.Intent
@@ -9,9 +9,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
-import android.widget.Toast
 import com.sap.codelab.BuildConfig
-import com.sap.codelab.model.VoiceCommands
 import com.sap.codelab.view.voice.VoiceRecognitionListener
 import java.util.*
 
@@ -87,11 +85,12 @@ class VoiceService : Service() {
         }
 
         override fun onError(error: Int) {
-            if (error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) {
-                startVoiceRecognition(voiceListener)
-            } else {
-                voiceListener?.onVoiceServiceError()
-            }
+            if (isVoiceRecognitionStart)
+                if (error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) {
+                    startVoiceRecognition(voiceListener)
+                } else {
+                    voiceListener?.onVoiceServiceError()
+                }
         }
 
         override fun onResults(results: Bundle) {
@@ -133,7 +132,7 @@ class VoiceService : Service() {
      */
     fun stopVoiceRecognition() {
         voiceListener = null
-        speechRecognizer.stopListening()
+        speechRecognizer.cancel()
         isVoiceRecognitionStart = false
     }
 
@@ -144,7 +143,7 @@ class VoiceService : Service() {
     private fun onRecognizerResult(result: List<String>) {
         if (result.isNotEmpty()) {
             val recognitionResult = result.joinToString(separator = " ")
-            Toast.makeText(this, recognitionResult, Toast.LENGTH_SHORT).show()
+            voiceListener?.onVoiceRecognitionPreResult(recognitionResult)
             val command =
                 VoiceCommands.values()
                     .firstOrNull { it.value == recognitionResult }

@@ -2,19 +2,22 @@ package com.sap.codelab.view.home
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
 import androidx.annotation.NonNull
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.lifecycle.ViewModelProvider
 import com.sap.codelab.R
 import com.sap.codelab.model.Memo
-import com.sap.codelab.model.VoiceCommands
+import com.sap.codelab.service.voice.VoiceCommands
 import com.sap.codelab.utils.coroutines.ScopeProvider
 import com.sap.codelab.view.create.CreateMemo
 import com.sap.codelab.view.detail.BUNDLE_MEMO_ID
 import com.sap.codelab.view.detail.ViewMemo
-import com.sap.codelab.view.voice.Voice
+import com.sap.codelab.view.voice.VoiceRecognizer
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.content_home.*
 import kotlinx.coroutines.launch
@@ -22,13 +25,14 @@ import kotlinx.coroutines.launch
 /**
  * The main activity of the app. Shows a list of recorded memos and lets the user add new memos.
  */
-internal class Home : Voice() {
+internal class Home : AppCompatActivity() {
 
     private lateinit var adapter: MemoAdapter
     private lateinit var model: HomeViewModel
     private lateinit var menuItemShowAll: MenuItem
     private lateinit var menuItemShowOpen: MenuItem
     private val ui = ScopeProvider.newScope()
+    private var voiceRecognizer: VoiceRecognizer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,12 +66,34 @@ internal class Home : Voice() {
         fab.setOnClickListener {
             //Handles clicks on the FAB button > creates a new Memo
             startActivity(Intent(this@Home, CreateMemo::class.java))
-            stopVoiceService()
         }
         fab.setOnLongClickListener {
-            startVoiceService()
+            startVoiceRecognition()
             true
         }
+    }
+
+    private fun startVoiceRecognition() {
+        if (voiceRecognizer == null)
+            voiceRecognizer = VoiceRecognizer.Builder(this)
+                .setOnVoiceRecognitionResult(::onVoiceRecognitionResult)
+                .setOnVoiceRecognitionStarted {
+                    fab.setImageResource(R.drawable.ic_mic)
+                    Toast.makeText(this, R.string.say_command, Toast.LENGTH_SHORT).show()
+                }
+                .setOnVoiceRecognitionPreResult {
+                    Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                }
+                .setOnVoiceRecognitionError {
+                    Toast.makeText(this, R.string.voice_service_error, Toast.LENGTH_LONG).show()
+                }
+                .setOnStop {
+                    fab.setImageResource(R.drawable.ic_add)
+                }
+                .build()
+                .start()
+        else if (!voiceRecognizer!!.isRecognitionStarted)
+            voiceRecognizer!!.start()
     }
 
     private fun observeViewModel(@NonNull viewModel: HomeViewModel, showAll: Boolean) {
@@ -124,7 +150,7 @@ internal class Home : Voice() {
      * Overridden method for process recognized results. If needn't process some of commands add empty else block
      * @param result enum collection of supported commands
      */
-    override fun onVoiceRecognitionResult(result: VoiceCommands) {
+    private fun onVoiceRecognitionResult(result: VoiceCommands) {
         when (result) {
             VoiceCommands.CREATE_MEMO -> openCreateNewMemo()
             VoiceCommands.SHOW_ALL -> showAllMemos()
@@ -133,8 +159,20 @@ internal class Home : Voice() {
         }
     }
 
+    /**
+     * Show message about unknown command to user
+     **/
+    private fun unknownCommand() {
+        Toast.makeText(this, R.string.unknown_command, Toast.LENGTH_LONG).show()
+    }
+
     private fun openCreateNewMemo() =
         startActivity(Intent(this@Home, CreateMemo::class.java))
+
+    override fun onStop() {
+        voiceRecognizer?.stop()
+        super.onStop()
+    }
 
     override fun onDestroy() {
         ScopeProvider.cancel(ui)
