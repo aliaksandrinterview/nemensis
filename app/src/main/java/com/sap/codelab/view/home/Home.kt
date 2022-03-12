@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sap.codelab.R
 import com.sap.codelab.model.Memo
-import com.sap.codelab.service.voice.VoiceCommands
+import com.sap.codelab.voice.VoiceCommands
 import com.sap.codelab.utils.coroutines.ScopeProvider
 import com.sap.codelab.view.create.CreateMemo
 import com.sap.codelab.view.detail.BUNDLE_MEMO_ID
 import com.sap.codelab.view.detail.ViewMemo
-import com.sap.codelab.view.voice.VoiceRecognizer
+import com.sap.codelab.voice.VoiceRecognizer
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.content_home.*
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package com.sap.codelab.service.voice
+package com.sap.codelab.voice
 
 /**
  * Supported commands for recognizer
