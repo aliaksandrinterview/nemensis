@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sap.codelab.R
 import com.sap.codelab.model.Memo
-import com.sap.codelab.service.voice.VoiceCommands
+import com.sap.codelab.voice.VoiceCommands
 import com.sap.codelab.utils.coroutines.ScopeProvider
 import com.sap.codelab.view.create.CreateMemo
 import com.sap.codelab.view.detail.BUNDLE_MEMO_ID
 import com.sap.codelab.view.detail.ViewMemo
-import com.sap.codelab.view.voice.VoiceRecognizer
+import com.sap.codelab.voice.VoiceRecognizer
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.content_home.*
 import kotlinx.coroutines.launch
@@ -74,26 +74,24 @@ internal class Home : AppCompatActivity() {
     }
 
     private fun startVoiceRecognition() {
-        if (voiceRecognizer == null)
-            voiceRecognizer = VoiceRecognizer.Builder(this)
-                .setOnVoiceRecognitionResult(::onVoiceRecognitionResult)
-                .setOnVoiceRecognitionStarted {
-                    fab.setImageResource(R.drawable.ic_mic)
-                    Toast.makeText(this, R.string.say_command, Toast.LENGTH_SHORT).show()
-                }
-                .setOnVoiceRecognitionPreResult {
-                    Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                }
-                .setOnVoiceRecognitionError {
-                    Toast.makeText(this, R.string.voice_service_error, Toast.LENGTH_LONG).show()
-                }
-                .setOnStop {
-                    fab.setImageResource(R.drawable.ic_add)
-                }
-                .build()
-                .start()
-        else if (!voiceRecognizer!!.isRecognitionStarted)
-            voiceRecognizer!!.start()
+        val recognizer = voiceRecognizer ?: VoiceRecognizer.Builder(this)
+            .setOnVoiceRecognitionResult(::onVoiceRecognitionResult)
+            .setOnVoiceRecognitionStarted {
+                fab.setImageResource(R.drawable.ic_mic)
+                Toast.makeText(this, R.string.say_command, Toast.LENGTH_SHORT).show()
+            }
+            .setOnVoiceRecognitionPreResult {
+                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+            }
+            .setOnVoiceRecognitionError {
+                Toast.makeText(this, R.string.voice_service_error, Toast.LENGTH_LONG).show()
+            }
+            .setOnStop {
+                fab.setImageResource(R.drawable.ic_add)
+            }
+            .build()
+            .also { voiceRecognizer = it }
+        recognizer.start()
     }
 
     private fun observeViewModel(@NonNull viewModel: HomeViewModel, showAll: Boolean) {

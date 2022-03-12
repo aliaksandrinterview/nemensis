@@ -1,4 +1,4 @@
-package com.sap.codelab.service.voice
+package com.sap.codelab.voice
 
 import android.app.Service
 import android.content.Intent
@@ -10,7 +10,6 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import com.sap.codelab.BuildConfig
-import com.sap.codelab.view.voice.VoiceRecognitionListener
 import java.util.*
 
 /**
@@ -26,7 +25,7 @@ class VoiceService : Service() {
     private var isVoiceRecognitionStart = true
 
     /**
-     * Interface for sending recognition results to activity
+     * Interface for sending recognition results
      */
     private var voiceListener: VoiceRecognitionListener? = null
 
@@ -119,7 +118,7 @@ class VoiceService : Service() {
 
     /**
      * Function for start listen commands
-     * @param voiceListener listener for send recognition results to activity
+     * @param voiceListener listener for send recognition results
      */
     fun startVoiceRecognition(voiceListener: VoiceRecognitionListener?) {
         this.voiceListener = voiceListener

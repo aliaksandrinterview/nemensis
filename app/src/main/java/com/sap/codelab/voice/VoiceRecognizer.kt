@@ -1,4 +1,4 @@
-package com.sap.codelab.view.voice
+package com.sap.codelab.voice
 
 import android.Manifest
 import android.app.Activity
@@ -10,11 +10,9 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.sap.codelab.service.voice.VoiceCommands
-import com.sap.codelab.service.voice.VoiceService
 
 /**
- * The abstract activity for voice recognition. For start recognition call startVoiceService() function.
+ * The voice recognizer class for listen commands.
  **/
 class VoiceRecognizer(private val builder: Builder) : VoiceRecognitionListener {
 
@@ -97,7 +95,7 @@ class VoiceRecognizer(private val builder: Builder) : VoiceRecognitionListener {
     }
 
     /**
-     * Stop listening voice after disconnect service.
+     * Stop listening voice commands.
      */
     private fun stopListeningVoice() {
         voiceService?.stopVoiceRecognition()
@@ -125,7 +123,10 @@ class VoiceRecognizer(private val builder: Builder) : VoiceRecognitionListener {
         )
     }
 
-    class Builder(public val activity: Activity) {
+    /**
+     * Builder for start voice recognition service with setting actions to process into calling place.
+     */
+    class Builder(val activity: Activity) {
 
         var onVoiceRecognitionResult: ((result: VoiceCommands) -> Unit)? = null
             private set
@@ -163,6 +164,9 @@ class VoiceRecognizer(private val builder: Builder) : VoiceRecognitionListener {
             return this
         }
 
+        /**
+         * Finish settings and return recognizer
+         */
         fun build(): VoiceRecognizer = VoiceRecognizer(this)
     }
 

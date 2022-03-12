@@ -1,6 +1,4 @@
-package com.sap.codelab.view.voice
-
-import com.sap.codelab.service.voice.VoiceCommands
+package com.sap.codelab.voice
 
 interface VoiceRecognitionListener {
 
