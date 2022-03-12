@@ -1,0 +1,23 @@
+#built application files
+*.apk
+*.ap_
+# files for the dex VM
+*.dex
+# generated files
+bin/
+gen/
+*.iml
+.gradle
+/local.properties
+.idea
+.idea/workspace.xml
+.idea/codeStyles
+.idea/codeStyles/codeStyleConfix.xml
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+output.json
+release/
+.idea/
+app/release/

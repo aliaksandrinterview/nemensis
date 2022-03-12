@@ -8,4 +8,7 @@
     <string name="action_save">Save</string>
     <string name="memo_title_empty_error">Please provide a title for this memo</string>
     <string name="memo_text_empty_error">Please provide a memo description</string>
+    <string name="voice_service_error">Error recognition</string>
+    <string name="unknown_command">This command not supported. Try again after long tap by button</string>
+    <string name="say_command">Say command</string>
 </resources>
